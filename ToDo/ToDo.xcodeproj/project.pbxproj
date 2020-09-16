@@ -14,6 +14,7 @@
 		5C5AA898250EF6EF0024106B /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 5C5AA896250EF6EF0024106B /* LaunchScreen.storyboard */; };
 		5C5AA8A0250EF8D70024106B /* ToDoListTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C5AA89F250EF8D70024106B /* ToDoListTableViewController.swift */; };
 		5C5AA8A92510609E0024106B /* DataModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 5C5AA8A72510609E0024106B /* DataModel.xcdatamodeld */; };
+		5CBC784D2511BC22000424D7 /* CategoryTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CBC784C2511BC22000424D7 /* CategoryTableViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +27,7 @@
 		5C5AA899250EF6EF0024106B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		5C5AA89F250EF8D70024106B /* ToDoListTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToDoListTableViewController.swift; sourceTree = "<group>"; };
 		5C5AA8A82510609E0024106B /* DataModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = DataModel.xcdatamodel; sourceTree = "<group>"; };
+		5CBC784C2511BC22000424D7 /* CategoryTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryTableViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -81,6 +83,7 @@
 			isa = PBXGroup;
 			children = (
 				5C5AA89F250EF8D70024106B /* ToDoListTableViewController.swift */,
+				5CBC784C2511BC22000424D7 /* CategoryTableViewController.swift */,
 			);
 			path = Controllers;
 			sourceTree = "<group>";
@@ -175,6 +178,7 @@
 			files = (
 				5C5AA8A92510609E0024106B /* DataModel.xcdatamodeld in Sources */,
 				5C5AA88C250EF6EE0024106B /* AppDelegate.swift in Sources */,
+				5CBC784D2511BC22000424D7 /* CategoryTableViewController.swift in Sources */,
 				5C5AA88E250EF6EE0024106B /* SceneDelegate.swift in Sources */,
 				5C5AA8A0250EF8D70024106B /* ToDoListTableViewController.swift in Sources */,
 			);
