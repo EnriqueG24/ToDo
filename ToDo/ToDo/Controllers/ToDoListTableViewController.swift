@@ -30,6 +30,28 @@ class ToDoListTableViewController: SwipeTableViewController {
         tableView.separatorStyle = .none
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        if let hexValue = selectedCategory?.color {
+            title = selectedCategory?.name
+            guard let navBar = navigationController?.navigationBar else {
+                fatalError("Navigation Controller does not exist")
+            }
+            
+            let bar = UINavigationBarAppearance()
+            if let navBarColor = UIColor(hexString: hexValue) {
+                bar.backgroundColor = navBarColor
+                navBar.backgroundColor = navBarColor
+                navBar.standardAppearance = bar
+                navBar.compactAppearance = bar
+                navBar.scrollEdgeAppearance = bar
+                searchBar.barTintColor = navBarColor
+                searchBar.searchTextField.backgroundColor = .white
+                navBar.tintColor = ContrastColorOf(navBarColor, returnFlat: true)
+                navBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor : ContrastColorOf(navBarColor, returnFlat: true)]
+            }
+        }
+    }
+    
     // MARK: - IBActions
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         // The alert controller that will be presented to the user so they can add a new item
@@ -94,7 +116,7 @@ class ToDoListTableViewController: SwipeTableViewController {
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
         if let item = todoItems?[indexPath.row] {
             cell.textLabel?.text = item.title
-            if let color = FlatSkyBlue().darken(byPercentage: CGFloat(indexPath.row) / CGFloat(todoItems!.count)) {
+            if let color = UIColor(hexString: selectedCategory!.color)?.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(todoItems!.count)) {
                 cell.backgroundColor = color
                 cell.textLabel?.textColor = ContrastColorOf(color, returnFlat: true)
             }
