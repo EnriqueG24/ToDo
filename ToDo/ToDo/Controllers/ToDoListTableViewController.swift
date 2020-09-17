@@ -27,20 +27,7 @@ class ToDoListTableViewController: SwipeTableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         searchBar.delegate = self
-    }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        
-        if let colorHex = selectedCategory?.color {
-            title = selectedCategory!.name
-            guard let navBar = navigationController?.navigationBar else { fatalError("Navigation controller does not exist.")
-            }
-            if let navBarColor = UIColor(hexString: colorHex) {
-                navBar.backgroundColor = navBarColor
-                navBar.tintColor = ContrastColorOf(navBarColor, returnFlat: true)
-                searchBar.barTintColor = navBarColor
-            }
-        }
+        tableView.separatorStyle = .none
     }
     
     // MARK: - IBActions
@@ -107,7 +94,7 @@ class ToDoListTableViewController: SwipeTableViewController {
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
         if let item = todoItems?[indexPath.row] {
             cell.textLabel?.text = item.title
-            if let color = UIColor(hexString: selectedCategory!.color)?.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(todoItems!.count)) {
+            if let color = FlatSkyBlue().darken(byPercentage: CGFloat(indexPath.row) / CGFloat(todoItems!.count)) {
                 cell.backgroundColor = color
                 cell.textLabel?.textColor = ContrastColorOf(color, returnFlat: true)
             }
