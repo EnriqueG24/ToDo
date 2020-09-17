@@ -7,18 +7,21 @@
 //
 
 import UIKit
-import CoreData
+import RealmSwift
+import ChameleonFramework
 
-class ToDoListTableViewController: UITableViewController {
+class ToDoListTableViewController: SwipeTableViewController {
     
     // MARK: - Properties
-    var itemArray = [Item]()
+    var todoItems: Results<Item>?
+    let realm = try! Realm()
     var selectedCategory: Category? {
         didSet {
             loadItem()
         }
     }
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    // MARK: - IBOutlets
+    @IBOutlet weak var searchBar: UISearchBar!
     
     // MARK: - View LifeCycle
     override func viewDidLoad() {
@@ -26,8 +29,19 @@ class ToDoListTableViewController: UITableViewController {
         searchBar.delegate = self
     }
     
-    // MARK: - IBOutlets
-    @IBOutlet weak var searchBar: UISearchBar!
+    override func viewWillAppear(_ animated: Bool) {
+        
+        if let colorHex = selectedCategory?.color {
+            title = selectedCategory!.name
+            guard let navBar = navigationController?.navigationBar else { fatalError("Navigation controller does not exist.")
+            }
+            if let navBarColor = UIColor(hexString: colorHex) {
+                navBar.backgroundColor = navBarColor
+                navBar.tintColor = ContrastColorOf(navBarColor, returnFlat: true)
+                searchBar.barTintColor = navBarColor
+            }
+        }
+    }
     
     // MARK: - IBActions
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
@@ -40,19 +54,21 @@ class ToDoListTableViewController: UITableViewController {
         // We'll use "weak self, weak alert" so that the reference count will be automatically set to nil when the reference object gets deallocated.
         let action = UIAlertAction(title: "Add Item", style: .default) { [weak self, weak alert] _ in
             
-            
-            let newItem = Item(context: self!.context)
-            newItem.title = alert?.textFields?[0].text
-            newItem.done = false
-            newItem.parentCategory = self?.selectedCategory
-            
-            // Append it to our array
-            self?.itemArray.append(newItem)
+            if let currentCategory = self?.selectedCategory {
+                do {
+                    try self?.realm.write {
+                        let newItem = Item()
+                        newItem.title = (alert?.textFields?[0].text)!
+                        newItem.dateCreated = Date()
+                        currentCategory.items.append(newItem)
+                    }
+                } catch {
+                    print("Error savingn new items: \(error)")
+                }
+            }
             
             // Reload the table view so it displays the users input
             self?.tableView.reloadData()
-            
-            self?.saveItem()
         }
         
         // Add the UIAlertAction to the UIAlertController
@@ -63,58 +79,57 @@ class ToDoListTableViewController: UITableViewController {
     }
     
     // MARK: - CRUD Methods
-    func saveItem() {
-        do {
-            try context.save()
-        } catch {
-            print("Error saving context: \(error)")
-        }
+    
+    func loadItem() {
+        todoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
         tableView.reloadData()
     }
     
-    func loadItem(with request: NSFetchRequest<Item> = Item.fetchRequest(), predicate: NSPredicate? = nil) {
-        
-        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
-        
-        if let additionalPredicate = predicate {
-            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
-        } else {
-            request.predicate = categoryPredicate
+    override func updateModel(at indexPath: IndexPath) {
+        if let item = todoItems?[indexPath.row] {
+            do {
+                try realm.write{
+                    realm.delete(item)
+                }
+            } catch {
+                print("Error deleting item, \(error)")
+            }
         }
-        
-        do {
-            itemArray = try context.fetch(request)
-        } catch {
-            print("Error fetching data from context: \(error)")
-        }
-        tableView.reloadData()
     }
     
     
     // MARK: - Table view data source
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return itemArray.count
+        return todoItems?.count ?? 1
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
-        
-        let item = itemArray[indexPath.row]
-        
-        cell.textLabel?.text = itemArray[indexPath.row].title
-        
-        // Ternary Operator to add or remove the checkmark
-        cell.accessoryType = item.done ? .checkmark : .none
-        
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
+        if let item = todoItems?[indexPath.row] {
+            cell.textLabel?.text = item.title
+            if let color = UIColor(hexString: selectedCategory!.color)?.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(todoItems!.count)) {
+                cell.backgroundColor = color
+                cell.textLabel?.textColor = ContrastColorOf(color, returnFlat: true)
+            }
+            cell.accessoryType = item.done ? .checkmark : .none
+        } else {
+            cell.textLabel?.text = "No Items Added"
+        }
         return cell
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        if let item = todoItems?[indexPath.row] {
+            do {
+                try realm.write {
+                    item.done = !item.done
+                }
+            } catch {
+                print("Error saving done status: \(error)")
+            }
+        }
         
-        // If the cell has a checkmark, remove it when selected. It if doesn't, then add one.
-        itemArray[indexPath.row].done = !itemArray[indexPath.row].done
-        
-        saveItem()
+        tableView.reloadData()
         
         // This will remove the highlight after the user has tapped on a cell
         tableView.deselectRow(at: indexPath, animated: true)
@@ -125,15 +140,10 @@ class ToDoListTableViewController: UITableViewController {
 extension ToDoListTableViewController: UISearchBarDelegate {
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        // This will query our items using the given predicates and sort it by the "date created" in ascending order
+        todoItems = todoItems?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated", ascending: true)
         
-        // Our predicate will look in our item array, and locate the "title" that CONTAINS the specified text we inputed. Then add our query to our request
-        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
-        
-        // Sort using the key "title" in alphabetical order. Then add our sort descriptor to our request
-        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-        
-        loadItem(with: request, predicate: predicate)
+        tableView.reloadData()
     }
     
     // This gets triggered when the text inside the search bar has changed
